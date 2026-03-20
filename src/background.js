@@ -30,11 +30,13 @@ async function updateRules(sites) {
     }
   }))
 
-  // 保存规则到 storage（因为 declarativeNetRequest 需要静态规则）
-  // 我们使用 session storage 来动态管理
+  // 使用 dynamic rules，确保重启浏览器后规则仍然存在
   try {
-    await chrome.declarativeNetRequest.updateSessionRules({
-      removeRuleIds: Array.from({ length: 100 }, (_, i) => i + 1),
+    const existingRules = await chrome.declarativeNetRequest.getDynamicRules()
+    const removeRuleIds = existingRules.map((rule) => rule.id)
+
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds,
       addRules: newRules
     })
   } catch (error) {
@@ -45,19 +47,30 @@ async function updateRules(sites) {
   chrome.storage.sync.set({ blockedSites: sites })
 }
 
-// 扩展安装时初始化默认数据
-chrome.runtime.onInstalled.addListener(() => {
+function initializeRules() {
   chrome.storage.sync.get(['blockedSites', 'managementPassword'], (data) => {
+    const sites = data.blockedSites && data.blockedSites.length > 0
+      ? data.blockedSites
+      : ['bilibili.com', 'weibo.com']
+
     if (!data.blockedSites) {
-      const defaultSites = ['bilibili.com', 'weibo.com']
-      chrome.storage.sync.set({ blockedSites: defaultSites })
-      updateRules(defaultSites)
-    } else {
-      updateRules(data.blockedSites)
+      chrome.storage.sync.set({ blockedSites: sites })
     }
 
     if (!data.managementPassword) {
       chrome.storage.sync.set({ managementPassword: '1234' })
     }
+
+    updateRules(sites)
   })
+}
+
+// 扩展安装时初始化默认数据
+chrome.runtime.onInstalled.addListener(() => {
+  initializeRules()
+})
+
+// 浏览器重启后也自动恢复规则
+chrome.runtime.onStartup.addListener(() => {
+  initializeRules()
 })
