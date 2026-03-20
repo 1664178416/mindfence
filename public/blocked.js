@@ -1,10 +1,19 @@
+function getOriginalUrl() {
+  const search = window.location.search
+  if (search.startsWith('?url=')) {
+    return search.substring(5) + window.location.hash
+  }
+  return document.referrer || ''
+}
+
 function getBlockedHost() {
-  if (!document.referrer) {
+  const url = getOriginalUrl()
+  if (!url) {
     return ''
   }
 
   try {
-    return new URL(document.referrer).host
+    return new URL(url).host
   } catch {
     return ''
   }
@@ -37,6 +46,47 @@ function showRandomQuote() {
   quoteText.textContent = warningQuotes[randomIndex]
 }
 
+// 检查当前网站是否还在屏蔽列表中
+async function checkIfStillBlocked() {
+  const blockedHost = getBlockedHost()
+  if (!blockedHost) {
+    return false
+  }
+
+  try {
+    // 通过扩展消息获取当前屏蔽列表
+    const response = await chrome.runtime.sendMessage({ type: 'GET_SITES' })
+    const blockedSites = response.sites || []
+
+    // 检查当前域名是否还在屏蔽列表中
+    return blockedSites.some(site => {
+      let cleanSite = site
+      if (site.startsWith('*.')) {
+        cleanSite = site.slice(2)
+      }
+      
+      // blockedHost 可能是 www.weibo.com，site 是 weibo.com
+      // 我们需要判断 blockedHost 是否完全等于 cleanSite，或者以 '.cleanSite' 结尾
+      return blockedHost === cleanSite || blockedHost.endsWith('.' + cleanSite)
+    })
+  } catch (error) {
+    console.error('检查屏蔽状态失败:', error)
+    return true // 出错时默认认为仍在屏蔽
+  }
+}
+
+// 自动检查并跳转
+async function autoCheckAndRedirect() {
+  const isStillBlocked = await checkIfStillBlocked()
+  if (!isStillBlocked) {
+    const originalUrl = getOriginalUrl()
+    // 如果不再被屏蔽，跳转回原页面
+    if (originalUrl) {
+      window.location.replace(originalUrl)
+    }
+  }
+}
+
 function initBlockedPage() {
   const blockedHost = getBlockedHost()
   if (blockedHost) {
@@ -52,6 +102,21 @@ function initBlockedPage() {
   }
 
   showRandomQuote()
+
+  // 监听存储变化（当从设置中移除屏蔽网站时触发）
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace === 'sync' && changes.blockedSites) {
+        autoCheckAndRedirect()
+      }
+    })
+  }
+
+  // 页面加载后立即检查一次，以防在此期间配置已改变
+  setTimeout(() => {
+    // 只有在没被屏蔽才跳转，不刷新
+    autoCheckAndRedirect()
+  }, 100)
 }
 
 document.addEventListener('DOMContentLoaded', initBlockedPage)
