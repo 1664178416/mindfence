@@ -3,8 +3,18 @@
   "name": "MindFence",
   "version": "1.0.0",
   "description": "简洁漂亮的网站拦截器",
+  "icons": {
+    "16": "favicon.svg",
+    "48": "favicon.svg",
+    "128": "favicon.svg"
+  },
   "action": {
-    "default_popup": "index.html"
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "favicon.svg",
+      "48": "favicon.svg",
+      "128": "favicon.svg"
+    }
   },
   "permissions": [
     "storage",
@@ -15,5 +25,11 @@
   ],
   "background": {
     "service_worker": "src/background.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["blocked.html", "favicon.svg"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

@@ -20,10 +20,8 @@ async function updateRules(sites) {
     id: index + 1,
     priority: 1,
     action: {
-      type: 'block',
-      // 或使用 'redirect' 并指向拦截页面
-      // type: 'redirect',
-      // redirect: { extensionPath: '/blocked.html' }
+      type: 'redirect',
+      redirect: { extensionPath: '/blocked.html' }
     },
     condition: {
       urlFilter: site,
@@ -49,11 +47,17 @@ async function updateRules(sites) {
 
 // 扩展安装时初始化默认数据
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.sync.get(['blockedSites'], (data) => {
+  chrome.storage.sync.get(['blockedSites', 'managementPassword'], (data) => {
     if (!data.blockedSites) {
       const defaultSites = ['bilibili.com', 'weibo.com']
       chrome.storage.sync.set({ blockedSites: defaultSites })
       updateRules(defaultSites)
+    } else {
+      updateRules(data.blockedSites)
+    }
+
+    if (!data.managementPassword) {
+      chrome.storage.sync.set({ managementPassword: '1234' })
     }
   })
 })

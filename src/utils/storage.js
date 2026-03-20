@@ -1,11 +1,53 @@
 /* global chrome */
 
 // 与 Chrome Storage 交互的工具函数
+const DEFAULT_MANAGEMENT_PASSWORD = '1234'
 
 export async function getSites() {
   return new Promise((resolve) => {
     chrome.storage.sync.get(['blockedSites'], (data) => {
       resolve(data.blockedSites || [])
+    })
+  })
+}
+
+export async function getManagementPassword() {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get(['managementPassword'], (data) => {
+      if (data.managementPassword) {
+        resolve(data.managementPassword)
+        return
+      }
+
+      chrome.storage.sync.set(
+        { managementPassword: DEFAULT_MANAGEMENT_PASSWORD },
+        () => {
+          resolve(DEFAULT_MANAGEMENT_PASSWORD)
+        }
+      )
+    })
+  })
+}
+
+export async function verifyManagementPassword(password) {
+  const savedPassword = await getManagementPassword()
+  return password === savedPassword
+}
+
+export async function updateManagementPassword(currentPassword, newPassword) {
+  const savedPassword = await getManagementPassword()
+
+  if (currentPassword !== savedPassword) {
+    return { success: false, message: '当前密码错误' }
+  }
+
+  if (!newPassword || newPassword.length < 4) {
+    return { success: false, message: '新密码至少需要 4 位' }
+  }
+
+  return new Promise((resolve) => {
+    chrome.storage.sync.set({ managementPassword: newPassword }, () => {
+      resolve({ success: true, message: '密码修改成功' })
     })
   })
 }

@@ -1,33 +1,72 @@
 import React, { useState, useEffect } from 'react'
 import { ShieldCheck, Lock, Unlock, Plus, Trash2 } from 'lucide-react'
-import { getSites, addSite, removeSite } from './utils/storage'
+import {
+  getSites,
+  addSite,
+  removeSite,
+  verifyManagementPassword,
+  updateManagementPassword,
+  getManagementPassword
+} from './utils/storage'
 
 function App() {
   const [isLocked, setIsLocked] = useState(true)
   const [password, setPassword] = useState('')
   const [sites, setSites] = useState([])
   const [newSite, setNewSite] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [nextPassword, setNextPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPasswordEditor, setShowPasswordEditor] = useState(false)
+  const [isDefaultPassword, setIsDefaultPassword] = useState(false)
   const [loading, setLoading] = useState(true)
 
   // 组件挂载时加载网站列表
   useEffect(() => {
     const loadSites = async () => {
       const loadedSites = await getSites()
+      const savedPassword = await getManagementPassword()
       setSites(loadedSites)
+      setIsDefaultPassword(savedPassword === '1234')
       setLoading(false)
     }
 
     loadSites()
   }, [])
 
-  const handleUnlock = () => {
-    // 这里的 1234 就是你的二级密码
-    if (password === '1234') {
+  const handleUnlock = async () => {
+    const verified = await verifyManagementPassword(password)
+
+    if (verified) {
       setIsLocked(false)
       setPassword('')
     } else {
       alert('密码错误！')
     }
+  }
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !nextPassword || !confirmPassword) {
+      alert('请填写完整的密码信息')
+      return
+    }
+
+    if (nextPassword !== confirmPassword) {
+      alert('两次输入的新密码不一致')
+      return
+    }
+
+    const result = await updateManagementPassword(currentPassword, nextPassword)
+
+    if (result.success) {
+      setCurrentPassword('')
+      setNextPassword('')
+      setConfirmPassword('')
+      setShowPasswordEditor(false)
+      setIsDefaultPassword(false)
+    }
+
+    alert(result.message)
   }
 
   const handleAddSite = async () => {
@@ -76,10 +115,15 @@ function App() {
             <h2 className="text-lg font-semibold text-slate-700">管理权限已锁定</h2>
             <p className="text-sm text-slate-400">请输入密码以修改拦截名单</p>
           </div>
+          {isDefaultPassword && (
+            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-center">
+              当前是默认密码 1234，建议解锁后立即修改。
+            </p>
+          )}
           <input
             type="password"
             className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm"
-            placeholder="默认密码：1234"
+            placeholder="输入管理密码"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -132,8 +176,52 @@ function App() {
             </div>
           )}
 
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+            <button
+              onClick={() => setShowPasswordEditor((prev) => !prev)}
+              className="w-full py-3 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-semibold hover:bg-indigo-100 transition-colors active:scale-95"
+            >
+              {showPasswordEditor ? '收起密码修改' : '点击修改管理密码'}
+            </button>
+
+            {showPasswordEditor && (
+              <>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="当前密码"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500 transition-colors"
+                />
+                <input
+                  type="password"
+                  value={nextPassword}
+                  onChange={(e) => setNextPassword(e.target.value)}
+                  placeholder="新密码（至少4位）"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500 transition-colors"
+                />
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="确认新密码"
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500 transition-colors"
+                />
+                <button
+                  onClick={handleChangePassword}
+                  className="w-full py-3 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors active:scale-95"
+                >
+                  更新密码
+                </button>
+              </>
+            )}
+          </div>
+
           <button 
-            onClick={() => setIsLocked(true)}
+            onClick={() => {
+              setIsLocked(true)
+              setShowPasswordEditor(false)
+            }}
             className="w-full py-3 mt-4 text-xs text-slate-400 hover:text-indigo-600 transition-colors flex items-center justify-center gap-1"
           >
             <Lock size={12} /> 重新锁定管理权限
