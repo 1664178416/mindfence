@@ -11,6 +11,7 @@
             --ink-strong: #0f172a;
             --ink-normal: #334155;
             --ink-soft: #64748b;
+            --ink-quote: #1e293b;
             --accent: #0f766e;
             --accent-strong: #115e59;
             --glass: rgba(255, 255, 255, 0.8);
@@ -106,22 +107,49 @@
         }
 
         .note {
+            position: relative;
             text-align: left;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.72);
-            border: 1px solid #e2e8f0;
-            padding: 14px 16px;
-            margin-bottom: 24px;
-            color: #475569;
-            font-size: 14px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.94));
+            border: 1px solid #dfe7f2;
+            padding: 18px 18px 18px 20px;
+            margin-bottom: 22px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        .note::before {
+            content: '“';
+            position: absolute;
+            top: -8px;
+            left: 12px;
+            font-size: 48px;
+            color: rgba(15, 118, 110, 0.2);
+            line-height: 1;
+            font-family: Georgia, 'Times New Roman', serif;
+        }
+
+        .quote-label {
+            display: inline-block;
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #0f766e;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .quote-text {
+            display: block;
+            color: var(--ink-quote);
+            font-size: 20px;
             line-height: 1.7;
+            font-family: 'STKaiti', 'KaiTi', 'Songti SC', 'Noto Serif CJK SC', serif;
         }
 
         .actions {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
+            margin-top: 2px;
         }
 
         button {
@@ -145,17 +173,6 @@
             transform: translateY(-1px);
         }
 
-        .btn-secondary {
-            color: #334155;
-            background: #ffffff;
-            border: 1px solid #dbe3ee;
-        }
-
-        .btn-secondary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 16px rgba(148, 163, 184, 0.2);
-        }
-
         @media (max-width: 520px) {
             .container {
                 padding: 24px 18px;
@@ -164,6 +181,10 @@
 
             .subtitle {
                 font-size: 14px;
+            }
+
+            .quote-text {
+                font-size: 18px;
             }
         }
     </style>
@@ -176,19 +197,17 @@
             </svg>
         </div>
         <h1>此网站已被拦截</h1>
-        <p class="subtitle">MindFence 已按你的专注规则阻止访问。你可以返回继续任务，或在插件弹窗里调整拦截站点与管理密码。</p>
+        <p class="subtitle">MindFence 已按你的专注规则阻止访问。先稳住注意力，再决定下一步。</p>
 
         <div class="site-pill" id="siteInfo">已触发专注保护</div>
 
-        <div class="note">
-            <strong>提示：</strong>若你希望继续访问该网站，请在扩展弹窗中解锁管理权限后处理：
-            1. 从拦截列表移除该域名
-            2. 或修改管理密码后再由自己决定何时放行
+        <div class="note" id="quoteBox">
+            <strong class="quote-label" id="quoteLead">警世名言</strong>
+            <span class="quote-text" id="quoteText">请先停下来，给自己 3 秒钟，确认现在要做的事。</span>
         </div>
 
         <div class="actions">
-            <button class="btn-primary" onclick="goBack()">返回上一页</button>
-            <button class="btn-secondary" onclick="goHome()">前往常用首页</button>
+            <button class="btn-primary" onclick="showRandomQuote()">换一句</button>
         </div>
     </div>
     
@@ -205,23 +224,36 @@
             }
         }
 
+        const warningQuotes = [
+            '你不能同时追两只兔子。',
+            '凡事预则立，不预则废。',
+            '与其临渊羡鱼，不如退而结网。',
+            '拖延是最温柔的自我欺骗。',
+            '真正的自由，是能控制自己的注意力。',
+            '你今天的专注，会变成明天的底气。',
+            '把时间花在哪里，人生就长在哪里。',
+            '先完成，再完美。',
+            '没有纪律，灵感只是借口。',
+            '一时放纵，往往换来长久焦虑。',
+            '真正拉开差距的，是无人监督时的选择。',
+            '把每个 25 分钟守住，结果会替你说话。',
+            '专注不是苦行，而是对目标的尊重。',
+            '注意力是稀缺资产，请投资在重要的事上。'
+        ]
+
+        function showRandomQuote() {
+            const quoteText = document.getElementById('quoteText')
+            const randomIndex = Math.floor(Math.random() * warningQuotes.length)
+            quoteText.textContent = warningQuotes[randomIndex]
+        }
+
         const blockedHost = getBlockedHost()
         if (blockedHost) {
             const siteInfo = document.getElementById('siteInfo')
             siteInfo.textContent = `已拦截：${blockedHost}`
         }
 
-        function goBack() {
-            if (window.history.length > 1) {
-                window.history.back()
-            } else {
-                window.location.href = 'https://www.bing.com'
-            }
-        }
-
-        function goHome() {
-            window.location.href = 'https://www.bing.com'
-        }
+        showRandomQuote()
     </script>
 </body>
 </html>

@@ -45,6 +45,12 @@ function App() {
     }
   }
 
+  const handleUnlockKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleUnlock()
+    }
+  }
+
   const handleChangePassword = async () => {
     if (!currentPassword || !nextPassword || !confirmPassword) {
       alert('请填写完整的密码信息')
@@ -126,6 +132,7 @@ function App() {
             placeholder="输入管理密码"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={handleUnlockKeyDown}
           />
           <button
             onClick={handleUnlock}
