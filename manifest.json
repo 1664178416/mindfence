@@ -28,7 +28,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["blocked.html", "favicon.svg", "icon16.png", "icon48.png", "icon128.png"],
+      "resources": ["blocked.html", "blocked.js", "favicon.svg", "icon16.png", "icon48.png", "icon128.png"],
       "matches": ["<all_urls>"]
     }
   ]
