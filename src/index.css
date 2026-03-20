@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+body {
+  width: 350px; /* 必须给 body 设置宽度，否则插件弹窗就是 0 像素 */
+  min-height: 400px;
+  margin: 0;
+  background-color: #f8fafc; /* 让背景显色，确认加载了 */
+}

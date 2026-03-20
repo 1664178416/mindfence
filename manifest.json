@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "MindFence",
+  "version": "1.0.0",
+  "description": "简洁漂亮的网站拦截器",
+  "action": {
+    "default_popup": "index.html"
+  },
+  "permissions": [
+    "storage",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  }
+}
