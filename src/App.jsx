@@ -70,6 +70,8 @@ function App() {
       setConfirmPassword('')
       setShowPasswordEditor(false)
       setIsDefaultPassword(false)
+      setIsLocked(true)
+      setPassword('')
     }
 
     alert(result.message)
